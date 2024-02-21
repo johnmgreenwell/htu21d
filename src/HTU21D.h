@@ -26,7 +26,7 @@ private:
   static const uint8_t HTU21D_ADDR = 0x40;
 
   const uint8_t _addr;
-  TwoWire& _wire;
+  HAL::I2C& _i2c;
   HTU21DResolution _resolution;
   
   float temperature;

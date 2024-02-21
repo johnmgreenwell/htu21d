@@ -6,6 +6,7 @@ It allows to set the measurement resolution and implements the temperature corre
 For details on the sensor please refer to the datasheet.
 
 This library was written by Daniel Wiese (DevXplained).
+It was modified by John Greenwell for compatibility with a custom HAL framework.
 Redistribution is possible under the terms of the MIT license.
 
 # References

@@ -9,6 +9,7 @@
  * https://www.te.com/deu-de/product-CAT-HSC0004.html
  *
  * This library was written by Daniel Wiese (DevXplained).
+ * It has been slightly modified by John Greenwell for a custom HAL framework.
  * 
  * Redistribution is possible under the terms of the MIT license.
  */
@@ -19,6 +20,8 @@
 #define I2C_DELAY_NOT_SUPPORTED 1
 #endif
 
+#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+
 static const uint8_t HTU21D_DELAY_T[] = {50, 13, 25, 7};
 static const uint8_t HTU21D_DELAY_H[] = {16, 3, 5, 8};
 static const float HTU21D_TCoeff = -0.15;
@@ -28,10 +31,10 @@ static const float HTU21D_TCoeff = -0.15;
  * Initializes a new sensor instance
  * 
  * @param addr Sensor Address (default 0x40)
- * @param wire TWI bus instance (default Wire)
+ * @param i2c Reference to instance of HAL I2C
  */
-HTU21D::HTU21D(uint8_t addr, TwoWire& wire) : _addr(addr), _wire(wire), _resolution(RESOLUTION_RH12_T14) {
-  
+HTU21D::HTU21D(uint8_t addr, HAL::I2C& i2c) : _addr(addr), _i2c(wire), _resolution(RESOLUTION_RH12_T14) {
+  _i2c.setAddress(addr);
 }
 
 bool HTU21D::checkCRC8(uint8_t data[]) {
@@ -48,22 +51,15 @@ bool HTU21D::checkCRC8(uint8_t data[]) {
 }
 
 bool HTU21D::measureTemperature() {
-  /* Measure temperature */
-  _wire.beginTransmission(_addr);
-  _wire.write(TRIGGER_TEMP_MEAS_NH);
-#ifndef I2C_DELAY_NOT_SUPPORTED
-  _wire.endTransmission(false);
-#else
-  _wire.endTransmission(true);
-#endif
-  
-  delay(HTU21D_DELAY_T[_resolution]);
-  
-  _wire.requestFrom(_addr, static_cast<uint8_t>(3));
-  if(_wire.available() != 3) return false;
-  
   uint8_t data[3];
-  for(int i = 0; i < 3; i++) data[i] = _wire.read();
+
+  /* Measure temperature */
+  _i2c.write(TRIGGER_TEMP_MEAS_NH);
+  
+  HAL::delayMs(HTU21D_DELAY_T[_resolution]);
+  
+  _i2c.read(data, static_cast<uint8_t>(3));
+  
   if(!checkCRC8(data)) return false;
   
   uint16_t St = (data[0] << 8) | (data[1] & 0xFC);
@@ -73,22 +69,14 @@ bool HTU21D::measureTemperature() {
 }
 
 bool HTU21D::measureHumidity() {
+
   /* Measure humidity */
-  _wire.beginTransmission(_addr);
-  _wire.write(TRIGGER_HUM_MEAS_NH);
-#ifndef I2C_DELAY_NOT_SUPPORTED
-  _wire.endTransmission(false);
-#else
-  _wire.endTransmission(true);
-#endif
+  _i2c.write(TRIGGER_HUM_MEAS_NH);
   
   delay(HTU21D_DELAY_H[_resolution]);
-  
-  _wire.requestFrom(_addr, static_cast<uint8_t>(3));
-  if(_wire.available() != 3) return false;
-  
-  uint8_t data[3];
-  for(uint8_t i = 0; i < 3; i++) data[i] = _wire.read();
+
+  _i2c.read(data, static_cast<uint8_t>(3));
+
   if(!checkCRC8(data)) return false;
   
   uint16_t Srh = (data[0] << 8) | (data[1] & 0xFC);
@@ -121,10 +109,8 @@ bool HTU21D::measure() {
  * @see HTU21DResolution for possible resolutions
  */
 void HTU21D::setResolution(HTU21DResolution resolution) {
-  _wire.beginTransmission(_addr);
-  _wire.write(WRITE_USER_REG);
-  _wire.write((resolution & 0x01) | ((resolution & 0x02) << 6) | 0x02);
-  _wire.endTransmission();
+
+  _i2c.write(WRITE_USER_REG, (resolution & 0x01) | ((resolution & 0x02) << 6) | 0x02);
   
   _resolution = resolution;
 }
@@ -143,7 +129,6 @@ HTU21DResolution HTU21D::getResolution() {
  * @return true if the initialization was successful, otherwise false
  */
 bool HTU21D::begin() {
-  _wire.begin();
   return reset();
 }
   
@@ -152,18 +137,15 @@ bool HTU21D::begin() {
  * @return true if the reset was successful, otherwise false
  */
 bool HTU21D::reset() {
-  _wire.beginTransmission(_addr);
-  _wire.write(SOFT_RESET);
-  _wire.endTransmission();
+  uint8_t data[3];
+
+  _i2c.write(SOFT_RESET);
   
-  delay(15);
+  HAL::delayMs(15);
   
-  _wire.beginTransmission(_addr);
-  _wire.write(READ_USER_REG);
-  _wire.endTransmission(false);
-  _wire.requestFrom(_addr, static_cast<uint8_t>(3));
-  if(_wire.available() != 1) return false;
-  if(_wire.read() != 0x02) return false;
+  _i2c.writeRead(READ_USER_REG, data, static_cast<uint8_t>(3))
+
+  if(data[0] != 0x02) return false;
   
   _resolution = RESOLUTION_RH12_T14;
 
