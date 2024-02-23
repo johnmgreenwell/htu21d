@@ -5,8 +5,10 @@
 #ifndef _HTU21D_H
 #define _HTU21D_H
 
-#include "Arduino.h"
-#include "Wire.h"
+#include "hal.h"
+
+namespace PeripheralIO
+{
 
 /**
  * HTU21D Measurement Resolution
@@ -25,8 +27,8 @@ class HTU21D {
 private:
   static const uint8_t HTU21D_ADDR = 0x40;
 
-  const uint8_t _addr;
   HAL::I2C& _i2c;
+  const uint8_t _addr;
   HTU21DResolution _resolution;
   
   float temperature;
@@ -46,7 +48,7 @@ private:
   bool measureHumidity();
   bool checkCRC8(uint8_t data[]);
 public:
-  HTU21D(uint8_t addr = HTU21D_ADDR, TwoWire& wire = Wire);
+  HTU21D(HAL::I2C& i2c_bus);
   
   bool measure();
   float getTemperature(void) const;
@@ -57,5 +59,8 @@ public:
   bool begin(void);
 };
 
+}
 
 #endif
+
+// EOF

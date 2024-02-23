@@ -14,13 +14,12 @@
  * Redistribution is possible under the terms of the MIT license.
  */
 
-#include "HTU21D.h"
-
-#if defined(ESP_PLATFORM) && not defined(ESP8266)
-#define I2C_DELAY_NOT_SUPPORTED 1
-#endif
+#include "htu21d.h"
 
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+
+namespace PeripheralIO
+{
 
 static const uint8_t HTU21D_DELAY_T[] = {50, 13, 25, 7};
 static const uint8_t HTU21D_DELAY_H[] = {16, 3, 5, 8};
@@ -33,9 +32,8 @@ static const float HTU21D_TCoeff = -0.15;
  * @param addr Sensor Address (default 0x40)
  * @param i2c Reference to instance of HAL I2C
  */
-HTU21D::HTU21D(uint8_t addr, HAL::I2C& i2c) : _addr(addr), _i2c(wire), _resolution(RESOLUTION_RH12_T14) {
-  _i2c.setAddress(addr);
-}
+HTU21D::HTU21D(HAL::I2C& i2c_bus) : _i2c(i2c_bus), _addr(HTU21D_ADDR), _resolution(RESOLUTION_RH12_T14)
+{ }
 
 bool HTU21D::checkCRC8(uint8_t data[]) {
   uint8_t crc = 0;
@@ -54,9 +52,9 @@ bool HTU21D::measureTemperature() {
   uint8_t data[3];
 
   /* Measure temperature */
-  _i2c.write(TRIGGER_TEMP_MEAS_NH);
+  _i2c.write(static_cast<uint8_t>(TRIGGER_TEMP_MEAS_NH));
   
-  HAL::delayMs(HTU21D_DELAY_T[_resolution]);
+  HAL::delay_ms(HTU21D_DELAY_T[_resolution]);
   
   _i2c.read(data, static_cast<uint8_t>(3));
   
@@ -69,9 +67,10 @@ bool HTU21D::measureTemperature() {
 }
 
 bool HTU21D::measureHumidity() {
+  uint8_t data[3];
 
   /* Measure humidity */
-  _i2c.write(TRIGGER_HUM_MEAS_NH);
+  _i2c.write(static_cast<uint8_t>(TRIGGER_HUM_MEAS_NH));
   
   delay(HTU21D_DELAY_H[_resolution]);
 
@@ -139,11 +138,11 @@ bool HTU21D::begin() {
 bool HTU21D::reset() {
   uint8_t data[3];
 
-  _i2c.write(SOFT_RESET);
+  _i2c.write(static_cast<uint8_t>(SOFT_RESET));
   
-  HAL::delayMs(15);
+  HAL::delay_ms(15);
   
-  _i2c.writeRead(READ_USER_REG, data, static_cast<uint8_t>(3))
+  _i2c.writeRead(static_cast<uint8_t>(READ_USER_REG), data, static_cast<uint8_t>(3));
 
   if(data[0] != 0x02) return false;
   
@@ -171,3 +170,7 @@ float HTU21D::getTemperature() const {
 float HTU21D::getHumidity() const {
   return humidity;
 }
+
+}
+
+// EOF

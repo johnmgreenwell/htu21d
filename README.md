@@ -1,5 +1,5 @@
-# HTU21D Sensor Library
-This is an Arduino library for the HTU21D temperature and humidity sensor.
+# HTU21D Sensor Driver
+This is a custom driver for the HTU21D temperature and humidity sensor.
 
 It allows to set the measurement resolution and implements the temperature correction formula and the CRC algorithm given in the manufactures datasheet.
 
