@@ -52,11 +52,11 @@ bool HTU21D::measureTemperature() {
   uint8_t data[3];
 
   /* Measure temperature */
-  _i2c.write(static_cast<uint8_t>(TRIGGER_TEMP_MEAS_NH));
+  _i2c.write(_addr, static_cast<uint8_t>(TRIGGER_TEMP_MEAS_NH));
   
   HAL::delay_ms(HTU21D_DELAY_T[_resolution]);
   
-  _i2c.read(data, static_cast<uint8_t>(3));
+  _i2c.read(_addr, data, static_cast<uint8_t>(3));
   
   if(!checkCRC8(data)) return false;
   
@@ -70,11 +70,11 @@ bool HTU21D::measureHumidity() {
   uint8_t data[3];
 
   /* Measure humidity */
-  _i2c.write(static_cast<uint8_t>(TRIGGER_HUM_MEAS_NH));
+  _i2c.write(_addr, static_cast<uint8_t>(TRIGGER_HUM_MEAS_NH));
   
   delay(HTU21D_DELAY_H[_resolution]);
 
-  _i2c.read(data, static_cast<uint8_t>(3));
+  _i2c.read(_addr, data, static_cast<uint8_t>(3));
 
   if(!checkCRC8(data)) return false;
   
@@ -138,11 +138,11 @@ bool HTU21D::begin() {
 bool HTU21D::reset() {
   uint8_t data[3];
 
-  _i2c.write(static_cast<uint8_t>(SOFT_RESET));
+  _i2c.write(_addr, static_cast<uint8_t>(SOFT_RESET));
   
   HAL::delay_ms(15);
   
-  _i2c.writeRead(static_cast<uint8_t>(READ_USER_REG), data, static_cast<uint8_t>(3));
+  _i2c.writeRead(_addr, static_cast<uint8_t>(READ_USER_REG), data, static_cast<uint8_t>(3));
 
   if(data[0] != 0x02) return false;
   
