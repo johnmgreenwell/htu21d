@@ -109,7 +109,7 @@ bool HTU21D::measure() {
  */
 void HTU21D::setResolution(HTU21DResolution resolution) {
 
-  _i2c.write(WRITE_USER_REG, (resolution & 0x01) | ((resolution & 0x02) << 6) | 0x02);
+  _i2c.write(_addr, WRITE_USER_REG, (resolution & 0x01) | ((resolution & 0x02) << 6) | 0x02);
   
   _resolution = resolution;
 }
