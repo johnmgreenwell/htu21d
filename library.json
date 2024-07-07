@@ -1,0 +1,18 @@
+{
+    "name": "htu21d",
+    "version": "1.0.0",
+    "description": "Portable, multi-instance driver for HTU21D sensors",
+    "keywords": "embedded, driver, hal, temperature, humidity, sensor, htu21d",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/johnmgreenwell/htu21d"
+    },
+    "license": "MIT",
+    "frameworks": "*",
+    "platforms": "*",
+    "build": {
+        "flags": [
+        "-I../../include"
+        ]
+    }
+}
